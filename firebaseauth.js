@@ -11,8 +11,6 @@
     messagingSenderId: "992012588022",
     appId: "1:992012588022:web:547435fbd03fd837e12dd7",
     measurementId: "G-ZET96HE6DN"
- //YOUR COPIED FIREBASE PART SHOULD BE HERE
- //WATCH THIS VIDEO TO LEARN WHAT TO PUT HERE   https://youtu.be/_Xczf06n6x0
  };
 
  // Initialize Firebase
