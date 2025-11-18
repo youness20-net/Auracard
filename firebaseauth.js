@@ -1,6 +1,5 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 import { getFirestore, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
 function showMessage(message, divId) {
@@ -14,18 +13,49 @@ function showMessage(message, divId) {
   }, 5000);
 }
 
+async function loadConfig() {
+  // runtime config file
+  try {
+    const res = await fetch('/config.json', { cache: 'no-store' });
+    if (res.ok) {
+      const cfg = await res.json();
+      if (cfg && cfg.apiKey) return cfg;
+    }
+  } catch (e) {}
+  // runtime-injected global
+  if (typeof window !== 'undefined' && window.__FIREBASE_CONFIG__ && window.__FIREBASE_CONFIG__.apiKey) {
+    return window.__FIREBASE_CONFIG__;
+  }
+  // build-time env vars
+  try {
+    if (typeof import !== 'undefined' && typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_FIREBASE_API_KEY) {
+      return {
+        apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+        authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+        projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+        storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+        appId: import.meta.env.VITE_FIREBASE_APP_ID,
+        measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+      };
+    }
+  } catch (e) {}
+  console.warn('Firebase configuration not found. Provide it via /config.json, window.__FIREBASE_CONFIG__, or build-time envs.');
+  return null;
+}
+
 async function initFirebase() {
   try {
-    const res = await fetch("/config.json", { cache: "no-store" });
-    if (!res.ok) {
-      console.error("Failed to load Firebase config (/config.json). Status:", res.status);
+    const firebaseConfig = await loadConfig();
+    if (!firebaseConfig || !firebaseConfig.apiKey) {
+      console.error('Firebase not initialized: missing apiKey in firebaseConfig.');
+      attachAuthlessHandlers();
       return;
     }
-    const firebaseConfig = await res.json();
-    initializeApp(firebaseConfig);
 
-    const auth = getAuth();
-    const db = getFirestore();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
     const signUp = document.getElementById("submitSignUp");
     if (signUp) {
@@ -39,24 +69,16 @@ async function initFirebase() {
         createUserWithEmailAndPassword(auth, email, password)
           .then((userCredential) => {
             const user = userCredential.user;
-            const userData = {
-              email: email,
-              firstName: firstName,
-              lastName: lastName,
-            };
+            const userData = { email, firstName, lastName };
             showMessage("Account Created Successfully", "signUpMessage");
             const docRef = doc(db, "users", user.uid);
             setDoc(docRef, userData)
-              .then(() => {
-                window.location.href = "index.html";
-              })
-              .catch((error) => {
-                console.error("error writing document", error);
-              });
+              .then(() => { window.location.href = "index.html"; })
+              .catch((error) => { console.error("error writing document", error); });
           })
           .catch((error) => {
             const errorCode = error.code;
-            if (errorCode == "auth/email-already-in-use") {
+            if (errorCode === "auth/email-already-in-use") {
               showMessage("Email Address Already Exists !!!", "signUpMessage");
             } else {
               showMessage("unable to create User", "signUpMessage");
@@ -89,8 +111,35 @@ async function initFirebase() {
           });
       });
     }
+
+    const logoutBtn = document.getElementById("logout");
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", () => {
+        localStorage.removeItem("loggedInUserId");
+        signOut(auth)
+          .then(() => { window.location.href = "index.html"; })
+          .catch(err => { console.error("Error signing out", err); });
+      });
+    }
+
   } catch (err) {
     console.error("Error initializing Firebase:", err);
+    attachAuthlessHandlers();
+  }
+}
+
+function attachAuthlessHandlers() {
+  const signUp = document.getElementById("submitSignUp");
+  if (signUp) {
+    signUp.addEventListener("click", (e) => { e.preventDefault(); showMessage("Authentication is not configured.", "signUpMessage"); });
+  }
+  const signIn = document.getElementById("submitSignIn");
+  if (signIn) {
+    signIn.addEventListener("click", (e) => { e.preventDefault(); showMessage("Authentication is not configured.", "signInMessage"); });
+  }
+  const logoutBtn = document.getElementById("logout");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => { localStorage.removeItem("loggedInUserId"); window.location.href = "index.html"; });
   }
 }
 
