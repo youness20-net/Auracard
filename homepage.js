@@ -4,7 +4,7 @@ import{getFirestore, getDoc, doc} from "https://www.gstatic.com/firebasejs/10.11
 
 const firebaseConfig = {
     // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-    apiKey: "AIzaSyBQhBdc2fBUmY7_dkoEZDZtChqkAjhVoWE",
+    apiKey: "yourAPIKey",
     authDomain: "testscanaura.firebaseapp.com",
     projectId: "testscanaura",
     storageBucket: "testscanaura.firebasestorage.app",
@@ -12,8 +12,6 @@ const firebaseConfig = {
     appId: "1:992012588022:web:547435fbd03fd837e12dd7",
     measurementId: "G-ZET96HE6DN"
     
-    //YOUR COPIED FIREBASE PART SHOULD BE HERE
- //WATCH THIS VIDEO TO LEARN WHAT TO PUT HERE   https://youtu.be/_Xczf06n6x0
   };
  
   // Initialize Firebase
