@@ -4,7 +4,7 @@
  import{getFirestore, setDoc, doc} from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js"
  
  const firebaseConfig = {
-    apiKey: "AIzaSyBQhBdc2fBUmY7_dkoEZDZtChqkAjhVoWE",
+    apiKey: "yourAPIKey",
     authDomain: "testscanaura.firebaseapp.com",
     projectId: "testscanaura",
     storageBucket: "testscanaura.firebasestorage.app",
